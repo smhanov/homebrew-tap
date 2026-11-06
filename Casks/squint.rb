@@ -2,7 +2,8 @@ cask "squint" do
   version "1.0.1"
 
   homepage "https://github.com/smhanov/squint"
-  description "Review what your LLM just committed, in a terminal UI"
+  desc "Review what your LLM just committed, in a terminal UI"
+  name "squint"
 
   livecheck do
     url :latest
