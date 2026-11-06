@@ -6,7 +6,7 @@ cask "squint" do
   name "squint"
 
   livecheck do
-    url :latest
+    url "https://github.com/smhanov/squint/releases/latest"
     strategy :github_latest
   end
 
