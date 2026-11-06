@@ -1,17 +1,16 @@
-cask "squint" do
-  version "1.0.1"
-
-  homepage "https://github.com/smhanov/squint"
+class Squint < Formula
   desc "Review what your LLM just committed, in a terminal UI"
-  name "squint"
+  homepage "https://github.com/smhanov/squint"
+  version "1.0.1"
+  license "MIT"
 
   livecheck do
     url "https://github.com/smhanov/squint/releases/latest"
     strategy :github_latest
   end
 
-  binary "squint"
-
+  # Prebuilt static binaries from the GitHub release; formulas install
+  # without the quarantine flag that stalls ad-hoc-signed CLI casks.
   on_arm do
     url "https://github.com/smhanov/squint/releases/download/v#{version}/squint_#{version}_darwin_arm64.tar.gz"
     sha256 "62e774659841aa34865494d20edb770670bbe2877342b5ddf924d289e0cd3d9c"
@@ -19,5 +18,13 @@ cask "squint" do
   on_intel do
     url "https://github.com/smhanov/squint/releases/download/v#{version}/squint_#{version}_darwin_amd64.tar.gz"
     sha256 "6e1cfc66314030e59d939573e7eb55ff226e5bc0f41be2481bf9484a662c2412"
+  end
+
+  def install
+    bin.install "squint"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/squint --version")
   end
 end
