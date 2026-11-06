@@ -9,22 +9,22 @@ class Squint < Formula
     strategy :github_latest
   end
 
-  # Prebuilt static binaries from the GitHub release; formulas install
-  # without the quarantine flag that stalls ad-hoc-signed CLI casks.
-  on_arm do
-    url "https://github.com/smhanov/squint/releases/download/v#{version}/squint_#{version}_darwin_arm64.tar.gz"
-    sha256 "62e774659841aa34865494d20edb770670bbe2877342b5ddf924d289e0cd3d9c"
-  end
-  on_intel do
-    url "https://github.com/smhanov/squint/releases/download/v#{version}/squint_#{version}_darwin_amd64.tar.gz"
-    sha256 "6e1cfc66314030e59d939573e7eb55ff226e5bc0f41be2481bf9484a662c2412"
-  end
+  # Built from source: prebuilt-binary pours stall at dyld on macOS 26
+  # (Homebrew quarantines release artifacts; the ad-hoc-signed binary
+  # hangs in the dynamic loader even with the flag stripped). A source
+  # build produces a clean local binary with no Gatekeeper involvement.
+  url "https://github.com/smhanov/squint/archive/refs/tags/v#{version}.tar.gz"
+  sha256 "c52b68b9daca417e1a878fb28f831e7aecc35db787ca30083dbd2c68ae3421f3"
+
+  depends_on "go" => :build
 
   def install
-    bin.install "squint"
+    system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/squint"
   end
 
   test do
-    assert_match version.to_s, shell_output("#{bin}/squint --version")
+    repo = testpath/"repo"
+    system "git", "init", repo
+    assert_match version.to_s, shell_output("\#{bin}/squint --version")
   end
 end
