@@ -19,6 +19,11 @@ class Squint < Formula
   depends_on "go" => :build
 
   def install
+    # Static build, matching the release artifacts: CGO builds of this
+    # program stall at dyld when installed into the Cellar on macOS 26
+    # (see the module docstring of scripts/mouse-verify.py's sibling
+    # release notes; pure-Go builds run fine).
+    ENV["CGO_ENABLED"] = "0"
     system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/squint"
   end
 
