@@ -22,6 +22,18 @@ class Squint < Formula
     system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/squint"
   end
 
+  # macOS 26 can stall the first exec of a brew-poured binary forever
+  # (dyld never completes). Rewriting the file after the pour gives it
+  # a fresh inode and it runs.
+  def post_install
+    f = bin/"squint"
+    tmp = bin/"squint.rewrite"
+    FileUtils.mv(f, tmp)
+    FileUtils.cp(tmp, f)
+    File.delete(tmp)
+    File.chmod(0o755, f)
+  end
+
   test do
     repo = testpath/"repo"
     system "git", "init", repo
