@@ -9,39 +9,32 @@ class Squint < Formula
     strategy :github_latest
   end
 
-  # Built from source: prebuilt-binary pours stall at dyld on macOS 26
-  # (Homebrew quarantines release artifacts; the ad-hoc-signed binary
-  # hangs in the dynamic loader even with the flag stripped). A source
-  # build produces a clean local binary with no Gatekeeper involvement.
+  # Built from source, statically (CGO_ENABLED=0), matching the
+  # release artifacts.
   url "https://github.com/smhanov/squint/archive/refs/tags/v#{version}.tar.gz"
   sha256 "c52b68b9daca417e1a878fb28f831e7aecc35db787ca30083dbd2c68ae3421f3"
 
   depends_on "go" => :build
 
   def install
-    # Static build, matching the release artifacts: CGO builds of this
-    # program stall at dyld when installed into the Cellar on macOS 26
-    # (see the module docstring of scripts/mouse-verify.py's sibling
-    # release notes; pure-Go builds run fine).
     ENV["CGO_ENABLED"] = "0"
     system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/squint"
   end
 
-  # macOS 26 can stall the first exec of a brew-poured binary forever
-  # (dyld never completes). Rewriting the file after the pour gives it
-  # a fresh inode and it runs.
-  def post_install
-    f = bin/"squint"
-    tmp = bin/"squint.rewrite"
-    FileUtils.mv(f, tmp)
-    FileUtils.cp(tmp, f)
-    File.delete(tmp)
-    File.chmod(0o755, f)
+  def caveats
+    <<~CAVEATS
+      macOS 26 (Tahoe) has a known OS bug where the first launch of a
+      Homebrew-installed binary can stall in dyld for a long time
+      (syspolicyd scan; the same affects other brew-installed CLIs).
+      If `squint` hangs right after install, either wait for the scan
+      to complete or use the go-install path instead:
+
+        go install github.com/smhanov/squint/cmd/squint@latest
+    CAVEATS
   end
 
   test do
-    repo = testpath/"repo"
-    system "git", "init", repo
-    assert_match version.to_s, shell_output("\#{bin}/squint --version")
+    system "git", "init", testpath/"repo"
+    assert_match version.to_s, shell_output("#{bin}/squint --version")
   end
 end
